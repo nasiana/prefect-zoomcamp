@@ -10,6 +10,6 @@ docker_dep = Deployment.build_from_flow(
     infrastructure=docker_block,
 )
 
-
+ 
 if __name__ == "__main__":
     docker_dep.apply()

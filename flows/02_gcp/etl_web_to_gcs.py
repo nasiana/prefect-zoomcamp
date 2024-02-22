@@ -9,7 +9,7 @@ from random import randint
 def fetch(dataset_url: str) -> pd.DataFrame:
     """Read taxi data from web into pandas DataFrame"""
     # if randint(0, 1) > 0:
-    #     raise Exception
+    #     raise Exception 
 
     df = pd.read_csv(dataset_url)
     return df
@@ -18,6 +18,10 @@ def fetch(dataset_url: str) -> pd.DataFrame:
 @task(log_prints=True)
 def clean(df: pd.DataFrame) -> pd.DataFrame:
     """Fix dtype issues"""
+    # Adjust column names for Green Taxi data
+    # df["lpep_pickup_datetime"] = pd.to_datetime(df["lpep_pickup_datetime"])
+    # df["lpep_dropoff_datetime"] = pd.to_datetime(df["lpep_dropoff_datetime"])
+    # yellow taxi data columns
     df["tpep_pickup_datetime"] = pd.to_datetime(df["tpep_pickup_datetime"])
     df["tpep_dropoff_datetime"] = pd.to_datetime(df["tpep_dropoff_datetime"])
     print(df.head(2))
@@ -30,6 +34,9 @@ def clean(df: pd.DataFrame) -> pd.DataFrame:
 def write_local(df: pd.DataFrame, color: str, dataset_file: str) -> Path:
     """Write DataFrame out locally as parquet file"""
     path = Path(f"data/{color}/{dataset_file}.parquet")
+    if not path.parent.is_dir():
+        path.parent.mkdir(parents=True)
+    path = Path(path).as_posix()
     df.to_parquet(path, compression="gzip")
     return path
 
@@ -45,12 +52,16 @@ def write_gcs(path: Path) -> None:
 @flow()
 def etl_web_to_gcs() -> None:
     """The main ETL function"""
+    # green taxi data
+    # color = "green"
+    # year = 2020
+    # month = 1
+    # yellow taxi data
     color = "yellow"
-    year = 2021
-    month = 1
+    year = 2019
+    month = 3
     dataset_file = f"{color}_tripdata_{year}-{month:02}"
     dataset_url = f"https://github.com/DataTalksClub/nyc-tlc-data/releases/download/{color}/{dataset_file}.csv.gz"
-
     df = fetch(dataset_url)
     df_clean = clean(df)
     path = write_local(df_clean, color, dataset_file)
